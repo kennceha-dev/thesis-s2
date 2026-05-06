@@ -7,17 +7,13 @@ Intelligent Document Processing (IDP) adalah proses mengubah dokumen tidak terst
 
 Key Information Extraction (KIE) merupakan salah satu task utama dalam IDP karena berfokus pada pengambilan informasi bernilai dari dokumen. Dataset seperti FUNSD, CORD, SROIE, dan Kleister menunjukkan bahwa KIE melibatkan hubungan antara teks, posisi, struktur layout, dan schema anotasi, bukan hanya hasil OCR mentah (Jaume et al., 2019; Park et al., 2019; Huang et al., 2019; Stanisławek et al., 2021). Variasi dataset tersebut juga memperlihatkan bahwa karakteristik dokumen, mulai dari form, receipt, hingga dokumen panjang, mempengaruhi pendekatan ekstraksi yang digunakan.
 
-Pada banyak aplikasi administratif, KIE bersifat schema-driven karena jenis informasi yang dibutuhkan telah didefinisikan sebelum proses ekstraksi. Pendekatan ini berbeda dari ekstraksi terbuka karena sistem mengevaluasi keluaran terhadap schema tertentu. Kajian terkait menunjukkan bahwa schema-driven extraction tetap memerlukan informasi layout, pola nilai, dan validasi karena label dokumen tidak selalu konsisten antar-template.
-
 ## 2.2 Ekstraksi Dokumen
 
 Optical Character Recognition (OCR) merupakan fondasi awal dalam banyak sistem IDP. Tesseract menjadi salah satu OCR engine klasik yang banyak digunakan dan memberikan dasar penting tentang line finding, klasifikasi karakter, dan adaptive recognition (Smith, 2007). Perkembangan OCR modern kemudian mengarah pada sistem yang lebih ringan dan praktis seperti PP-OCR, serta pendekatan berbasis Transformer seperti TrOCR (Du et al., 2020; Li et al., 2023). PP-OCR relevan karena menunjukkan bahwa OCR praktis perlu mempertimbangkan efisiensi dan ukuran model, sedangkan TrOCR menunjukkan bahwa pre-trained Transformer dapat meningkatkan pengenalan teks cetak maupun tulisan tangan.
 
 Hasil OCR tidak otomatis setara dengan struktur informasi dokumen. OCR umumnya menghasilkan token teks, posisi, dan confidence, sementara pemetaan token ke unit informasi membutuhkan pemrosesan layout dan ekstraksi kandidat. Oleh karena itu, Layout detection dan field candidate extraction dapat dipahami sebagai dua tahap yang berbeda: layout detection mengenali organisasi visual dokumen, sedangkan field candidate extraction menghubungkan elemen visual-teks tersebut dengan struktur informasi yang dievaluasi.
 
-Layout analysis telah berkembang melalui toolkit dan dataset seperti LayoutParser, PubLayNet, DocLayNet, dan DocLayout-YOLO (Shen et al., 2021; Zhong et al., 2019; Pfitzmann et al., 2022; Zhao et al., 2024). LayoutParser menyediakan toolkit untuk document image analysis berbasis deep learning, PubLayNet menyediakan dataset layout skala besar dari artikel ilmiah, DocLayNet menyediakan anotasi layout manusia untuk ragam dokumen, sedangkan DocLayout-YOLO menekankan trade-off antara kecepatan dan akurasi pada layout analysis. Kajian ini mendukung rancangan penelitian bahwa OCR perlu dilengkapi dengan struktur posisi sebelum sistem dapat membuat keputusan pada level field.
-
-Dalam kajian dan praktik KIE, ekstraksi kandidat biasanya memanfaatkan kombinasi petunjuk berbasis teks, spasial, dan struktural. Label atau anchor text dapat memberi petunjuk awal, kedekatan spasial membantu menghubungkan label dengan nilai, pola tipe data membantu menyaring kandidat yang tidak valid, sedangkan informasi tabel diperlukan ketika data muncul dalam baris dan kolom. Pendekatan berbasis semantic similarity juga dapat digunakan untuk mengurangi ketergantungan pada kecocokan label.
+Layout analysis telah berkembang melalui toolkit dan dataset seperti LayoutParser, PubLayNet, DocLayNet, dan DocLayout-YOLO (Shen et al., 2021; Zhong et al., 2019; Pfitzmann et al., 2022; Zhao et al., 2024). LayoutParser menyediakan toolkit untuk document image analysis berbasis deep learning, PubLayNet menyediakan dataset layout skala besar dari artikel ilmiah, DocLayNet menyediakan anotasi layout manusia untuk ragam dokumen, sedangkan DocLayout-YOLO menekankan trade-off antara kecepatan dan akurasi pada layout analysis. Kajian ini mendukung rancangan penelitian bahwa OCR perlu dilengkapi dengan struktur posisi sebelum sistem dapat melakukan routing pada level field.
 
 ## 2.3 Document Understanding
 
@@ -25,13 +21,9 @@ Penelitian document understanding modern banyak dipengaruhi oleh model multimoda
 
 Di luar model LayoutLM, beberapa pendekatan lain juga relevan untuk KIE. DocFormer menggunakan multimodal self-attention untuk menggabungkan teks, visual, dan spatial features (Appalaraju et al., 2021). StructuralLM menekankan cell-level layout information untuk form understanding (Li et al., 2021). PICK menggunakan graph learning dan graph convolution untuk memanfaatkan hubungan visual dan tekstual pada dokumen kompleks (Yu et al., 2021). FormNet menunjukkan bahwa serialization token pada form-like document dapat menjadi masalah, sehingga dibutuhkan structural encoding melalui Rich Attention dan Super-Tokens (Lee et al., 2022). LiLT relevan untuk konteks multibahasa karena mencoba memisahkan layout structure dari language-specific text model (Wang et al., 2022).
 
-Kajian sebelumnya menunjukkan bahwa pemahaman dokumen tidak dapat dilepaskan dari posisi dan struktur. Namun, fokus utama sebagian besar model masih berada pada peningkatan representasi dan akurasi ekstraksi. Aspek operasional seperti seleksi jalur pemrosesan, pengendalian risiko keluaran, dan keputusan eskalasi belum menjadi fokus utama pada kelompok penelitian ini.
-
 ## 2.4 Table Understanding
 
 Banyak dokumen transaksi, invoice, receipt, dan laporan keuangan menyimpan informasi penting dalam bentuk tabel, misalnya daftar barang pada invoice, item pembelian pada struk, atau rincian pembayaran. Table understanding menjadi penting karena struktur baris dan kolom sering kali tidak eksplisit, terutama pada dokumen scan atau foto. TableBank menyediakan dataset besar untuk table detection dan recognition melalui weak supervision dari dokumen Word dan LaTeX (Li et al., 2020). PubTables-1M menyediakan hampir satu juta tabel dengan ground truth yang lebih lengkap dan mengatasi masalah inconsistency seperti oversegmentation (Smock et al., 2022). TableFormer menggunakan Transformer untuk table structure recognition dan melaporkan peningkatan TEDS pada tabel sederhana dan kompleks (Nassar et al., 2022). Smock et al. (2023) juga menekankan bahwa konsistensi benchmark table structure recognition sangat mempengaruhi performa dan evaluasi model.
-
-Pada dokumen dengan format tidak tetap, table understanding membantu memisahkan informasi yang berada dalam baris item dari informasi ringkasan. Pemisahan ini penting karena tabel sering mengandung hubungan hierarkis antara item, subtotal, pajak, diskon, dan total. Dengan demikian, metode ekstraksi berbasis baris, kolom, atau table parser menjadi relevan sebagai sumber struktur sebelum informasi dievaluasi lebih lanjut.
 
 ## 2.5 Model Generatif Dokumen
 
@@ -57,7 +49,7 @@ Tabel berikut merangkum pendekatan state of the art (SOTA) pada beberapa area ya
 
 | Paper | Ringkasan | Hasil | Limitasi |
 |---|---|---|---|
-| LayoutLMv3 (Huang et al., 2022) | Multimodal document representation untuk form, receipt, layout, dan VQA. | LayoutLMv3-large melaporkan FUNSD F1 = 92,08 dan CORD F1 = 97,46. LayoutLMv3-base melaporkan PubLayNet mAP = 95,1 dan DocVQA ANLS = 78,76. Nilai ini menunjukkan bahwa kombinasi teks, layout, dan visual masih sangat kuat untuk document understanding. | Masih bergantung pada OCR/token dan bounding box pada banyak task. Fokus utama adalah representasi model, bukan keputusan operasional apakah field harus diterima, dieskalasi, atau direview. |
+| LayoutLMv3 (Huang et al., 2022) | Multimodal document representation untuk form, receipt, layout, dan VQA. | LayoutLMv3-large melaporkan FUNSD F1 = 92,08 dan CORD F1 = 97,46. LayoutLMv3-base melaporkan PubLayNet mAP = 95,1 dan DocVQA ANLS = 78,76. Nilai ini menunjukkan bahwa kombinasi teks, layout, dan visual masih sangat kuat untuk document understanding. | Masih bergantung pada OCR/token dan bounding box pada banyak task. |
 | Donut (Kim et al., 2022) | OCR-free document understanding. | Pada RVL-CDIP, Donut melaporkan accuracy = 95,30% dengan waktu 752 ms per gambar pada P40 GPU, sedikit di atas LayoutLMv2 95,25% dengan 1.489 ms. Pada implementasi resmi CORD document parsing, model Donut melaporkan score sekitar 91,3 dengan sekitar 0,7 detik per gambar. | Performa tinggi membutuhkan fine-tuning dan data pretraining/sintetis. Output end-to-end lebih sulit diaudit dibanding pipeline yang menyimpan OCR token, bounding box, dan confidence per field. |
 | Qwen2.5-VL (Bai et al., 2025) | General VLM untuk OCR, document parsing, visual localization, dan structured extraction. | Untuk Qwen2.5-VL-72B, laporan benchmark menunjukkan DocVQA = 96,4%, InfoVQA = 87,3%, CC-OCR = 79,8%, dan OCRBenchV2 = 61,5/63,7. Beberapa ringkasan benchmark juga mencatat OCRBench sekitar 885 dan ChartQA sekitar 89,5. | Model besar dapat mahal dan latency tinggi jika digunakan untuk seluruh field. Evaluasi benchmark umum belum otomatis membuktikan efisiensi pada workflow IDP field-level. |
 | GOT-OCR 2.0 (Wei et al., 2024) | Unified OCR-2.0 untuk text, formula, tabel, chart, sheet music, geometry, dan region-level recognition. | Model berukuran sekitar 580M parameter dan mendukung whole-page OCR, sliced OCR, multi-page OCR, serta region-level recognition berbasis koordinat atau warna. Paper melaporkan hasil unggul pada beberapa benchmark OCR umum, dokumen, chart, dan formatted OCR dibanding baseline yang diuji. | Banyak hasil dilaporkan sebagai preprint dan benchmark lintas task tidak langsung setara dengan KIE administratif. Untuk tesis ini, GOT-OCR lebih cocok sebagai high-tier OCR/VLM route daripada fondasi utama. |
@@ -150,6 +142,11 @@ Yu, W., Lu, N., Qi, X., Gong, P., & Xiao, R. (2021). PICK: Processing key inform
 Zhao, Z., Kang, H., Wang, B., & He, C. (2024). *DocLayout-YOLO: Enhancing document layout analysis through diverse synthetic data and global-to-local adaptive perception*. arXiv. https://arxiv.org/abs/2410.12628
 
 Zhong, X., Tang, J., & Yepes, A. J. (2019). PubLayNet: Largest dataset ever for document layout analysis. *ICDAR 2019*. https://arxiv.org/abs/1908.07836
+
+
+
+
+
 
 
 
