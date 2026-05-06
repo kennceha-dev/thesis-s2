@@ -1,39 +1,39 @@
 ﻿# BAB II
 # TINJAUAN PUSTAKA
 
-## 2.1 Intelligent Document Processing dan Key Information Extraction
+## 2.1 Intelligent Document Processing
 
-Intelligent Document Processing (IDP) adalah proses mengubah dokumen tidak terstruktur atau semi-terstruktur menjadi data terstruktur yang dapat digunakan oleh sistem. Literatur IDP umumnya menempatkan OCR, analisis layout, ekstraksi informasi, validasi, dan ekspor data sebagai rangkaian proses yang saling bergantung. Perkembangan bidang ini menunjukkan pergeseran dari sekadar pengenalan teks menuju pemahaman struktur dokumen dan ekstraksi informasi yang sesuai dengan kebutuhan downstream system.
+Intelligent Document Processing (IDP) adalah proses mengubah dokumen tidak terstruktur atau dokumen dengan format tidak tetap menjadi data terstruktur yang dapat digunakan oleh sistem. Kajian IDP umumnya menempatkan OCR, analisis layout, ekstraksi informasi, validasi, dan ekspor data sebagai rangkaian proses yang saling bergantung. Perkembangan bidang ini menunjukkan pergeseran dari sekadar pengenalan teks menuju pemahaman struktur dokumen dan ekstraksi informasi yang sesuai dengan kebutuhan downstream system.
 
 Key Information Extraction (KIE) merupakan salah satu task utama dalam IDP karena berfokus pada pengambilan informasi bernilai dari dokumen. Dataset seperti FUNSD, CORD, SROIE, dan Kleister menunjukkan bahwa KIE melibatkan hubungan antara teks, posisi, struktur layout, dan schema anotasi, bukan hanya hasil OCR mentah (Jaume et al., 2019; Park et al., 2019; Huang et al., 2019; Stanisławek et al., 2021). Variasi dataset tersebut juga memperlihatkan bahwa karakteristik dokumen, mulai dari form, receipt, hingga dokumen panjang, mempengaruhi pendekatan ekstraksi yang digunakan.
 
-Pada banyak aplikasi administratif, KIE bersifat schema-driven karena jenis informasi yang dibutuhkan telah didefinisikan sebelum proses ekstraksi. Pendekatan ini berbeda dari ekstraksi terbuka karena sistem mengevaluasi keluaran terhadap schema tertentu. Literatur terkait menunjukkan bahwa schema-driven extraction tetap memerlukan informasi layout, pola nilai, dan validasi karena label dokumen tidak selalu konsisten antar-template.
+Pada banyak aplikasi administratif, KIE bersifat schema-driven karena jenis informasi yang dibutuhkan telah didefinisikan sebelum proses ekstraksi. Pendekatan ini berbeda dari ekstraksi terbuka karena sistem mengevaluasi keluaran terhadap schema tertentu. Kajian terkait menunjukkan bahwa schema-driven extraction tetap memerlukan informasi layout, pola nilai, dan validasi karena label dokumen tidak selalu konsisten antar-template.
 
-## 2.2 OCR, Layout Detection, dan Candidate Field Extraction
+## 2.2 Ekstraksi Dokumen
 
 Optical Character Recognition (OCR) merupakan fondasi awal dalam banyak sistem IDP. Tesseract menjadi salah satu OCR engine klasik yang banyak digunakan dan memberikan dasar penting tentang line finding, klasifikasi karakter, dan adaptive recognition (Smith, 2007). Perkembangan OCR modern kemudian mengarah pada sistem yang lebih ringan dan praktis seperti PP-OCR, serta pendekatan berbasis Transformer seperti TrOCR (Du et al., 2020; Li et al., 2023). PP-OCR relevan karena menunjukkan bahwa OCR praktis perlu mempertimbangkan efisiensi dan ukuran model, sedangkan TrOCR menunjukkan bahwa pre-trained Transformer dapat meningkatkan pengenalan teks cetak maupun tulisan tangan.
 
-Hasil OCR tidak otomatis setara dengan struktur informasi dokumen. OCR umumnya menghasilkan token teks, posisi, dan confidence, sementara pemetaan token ke unit informasi membutuhkan pemrosesan layout dan ekstraksi kandidat. Oleh karena itu, layout detection dan candidate field extraction dapat dipahami sebagai dua tahap yang berbeda: layout detection mengenali organisasi visual dokumen, sedangkan candidate extraction menghubungkan elemen visual-teks tersebut dengan struktur informasi yang dievaluasi.
+Hasil OCR tidak otomatis setara dengan struktur informasi dokumen. OCR umumnya menghasilkan token teks, posisi, dan confidence, sementara pemetaan token ke unit informasi membutuhkan pemrosesan layout dan ekstraksi kandidat. Oleh karena itu, Layout detection dan ekstraksi calon nilai dapat dipahami sebagai dua tahap yang berbeda: layout detection mengenali organisasi visual dokumen, sedangkan ekstraksi calon nilai menghubungkan elemen visual-teks tersebut dengan struktur informasi yang dievaluasi.
 
-Layout analysis telah berkembang melalui toolkit dan dataset seperti LayoutParser, PubLayNet, DocLayNet, dan DocLayout-YOLO (Shen et al., 2021; Zhong et al., 2019; Pfitzmann et al., 2022; Zhao et al., 2024). LayoutParser menyediakan toolkit untuk document image analysis berbasis deep learning, PubLayNet menyediakan dataset layout skala besar dari artikel ilmiah, DocLayNet menyediakan anotasi layout manusia untuk ragam dokumen, sedangkan DocLayout-YOLO menekankan trade-off antara kecepatan dan akurasi pada layout analysis. Literatur ini mendukung rancangan penelitian bahwa OCR perlu dilengkapi dengan struktur posisi sebelum sistem dapat membuat keputusan pada level field.
+Layout analysis telah berkembang melalui toolkit dan dataset seperti LayoutParser, PubLayNet, DocLayNet, dan DocLayout-YOLO (Shen et al., 2021; Zhong et al., 2019; Pfitzmann et al., 2022; Zhao et al., 2024). LayoutParser menyediakan toolkit untuk document image analysis berbasis deep learning, PubLayNet menyediakan dataset layout skala besar dari artikel ilmiah, DocLayNet menyediakan anotasi layout manusia untuk ragam dokumen, sedangkan DocLayout-YOLO menekankan trade-off antara kecepatan dan akurasi pada layout analysis. Kajian ini mendukung rancangan penelitian bahwa OCR perlu dilengkapi dengan struktur posisi sebelum sistem dapat membuat keputusan pada level field.
 
-Dalam literatur dan praktik KIE, ekstraksi kandidat biasanya memanfaatkan kombinasi sinyal tekstual, spasial, dan struktural. Label atau anchor text dapat memberi petunjuk awal, kedekatan spasial membantu menghubungkan label dengan nilai, pola tipe data membantu menyaring kandidat yang tidak valid, sedangkan informasi tabel diperlukan ketika data muncul dalam baris dan kolom. Pendekatan berbasis semantic similarity juga dapat digunakan untuk mengurangi ketergantungan pada kecocokan label.
+Dalam kajian dan praktik KIE, ekstraksi kandidat biasanya memanfaatkan kombinasi petunjuk berbasis teks, spasial, dan struktural. Label atau anchor text dapat memberi petunjuk awal, kedekatan spasial membantu menghubungkan label dengan nilai, pola tipe data membantu menyaring kandidat yang tidak valid, sedangkan informasi tabel diperlukan ketika data muncul dalam baris dan kolom. Pendekatan berbasis semantic similarity juga dapat digunakan untuk mengurangi ketergantungan pada kecocokan label.
 
-## 2.3 Structured Document Understanding Berbasis Multimodal dan Layout
+## 2.3 Document Understanding
 
 Penelitian document understanding modern banyak dipengaruhi oleh model multimodal yang menggabungkan teks, layout, dan visual. LayoutLM memperkenalkan pre-training yang menggabungkan teks dan informasi layout untuk document image understanding (Xu et al., 2020). LayoutLMv2 memperluas pendekatan tersebut dengan integrasi teks, layout, dan image dalam framework multimodal, termasuk spatial-aware self-attention dan pre-training task untuk cross-modality interaction (Xu et al., 2021). LayoutLMv3 kemudian menyederhanakan arsitektur dan tujuan pre-training melalui unified text and image masking serta word-patch alignment (Huang et al., 2022).
 
-Selain keluarga LayoutLM, beberapa pendekatan lain juga relevan untuk KIE. DocFormer menggunakan multimodal self-attention untuk menggabungkan teks, visual, dan spatial features (Appalaraju et al., 2021). StructuralLM menekankan cell-level layout information untuk form understanding (Li et al., 2021). PICK menggunakan graph learning dan graph convolution untuk memanfaatkan hubungan visual dan tekstual pada dokumen kompleks (Yu et al., 2021). FormNet menunjukkan bahwa serialization token pada form-like document dapat menjadi masalah, sehingga dibutuhkan structural encoding melalui Rich Attention dan Super-Tokens (Lee et al., 2022). LiLT relevan untuk konteks multibahasa karena mencoba memisahkan layout structure dari language-specific text model (Wang et al., 2022).
+Di luar model LayoutLM, beberapa pendekatan lain juga relevan untuk KIE. DocFormer menggunakan multimodal self-attention untuk menggabungkan teks, visual, dan spatial features (Appalaraju et al., 2021). StructuralLM menekankan cell-level layout information untuk form understanding (Li et al., 2021). PICK menggunakan graph learning dan graph convolution untuk memanfaatkan hubungan visual dan tekstual pada dokumen kompleks (Yu et al., 2021). FormNet menunjukkan bahwa serialization token pada form-like document dapat menjadi masalah, sehingga dibutuhkan structural encoding melalui Rich Attention dan Super-Tokens (Lee et al., 2022). LiLT relevan untuk konteks multibahasa karena mencoba memisahkan layout structure dari language-specific text model (Wang et al., 2022).
 
-Literatur tersebut menunjukkan bahwa pemahaman dokumen tidak dapat dilepaskan dari posisi dan struktur. Namun, fokus utama sebagian besar model masih berada pada peningkatan representasi dan akurasi ekstraksi. Aspek operasional seperti seleksi jalur pemrosesan, pengendalian risiko keluaran, dan keputusan eskalasi belum menjadi fokus utama pada kelompok penelitian ini.
+Kajian sebelumnya menunjukkan bahwa pemahaman dokumen tidak dapat dilepaskan dari posisi dan struktur. Namun, fokus utama sebagian besar model masih berada pada peningkatan representasi dan akurasi ekstraksi. Aspek operasional seperti seleksi jalur pemrosesan, pengendalian risiko keluaran, dan keputusan eskalasi belum menjadi fokus utama pada kelompok penelitian ini.
 
-## 2.4 Table Understanding dan Dokumen Semi-Terstruktur
+## 2.4 Table Understanding
 
-Banyak dokumen administratif menyimpan informasi penting dalam bentuk tabel, misalnya daftar barang pada invoice, item pembelian pada struk, atau rincian pembayaran. Table understanding menjadi penting karena struktur baris dan kolom sering kali tidak eksplisit, terutama pada dokumen scan atau foto. TableBank menyediakan dataset besar untuk table detection dan recognition melalui weak supervision dari dokumen Word dan LaTeX (Li et al., 2020). PubTables-1M menyediakan hampir satu juta tabel dengan ground truth yang lebih lengkap dan mengatasi masalah inconsistency seperti oversegmentation (Smock et al., 2022). TableFormer menggunakan Transformer untuk table structure recognition dan melaporkan peningkatan TEDS pada tabel sederhana dan kompleks (Nassar et al., 2022). Smock et al. (2023) juga menekankan bahwa konsistensi benchmark table structure recognition sangat mempengaruhi performa dan evaluasi model.
+Banyak dokumen administrasi menyimpan informasi penting dalam bentuk tabel, misalnya daftar barang pada invoice, item pembelian pada struk, atau rincian pembayaran. Table understanding menjadi penting karena struktur baris dan kolom sering kali tidak eksplisit, terutama pada dokumen scan atau foto. TableBank menyediakan dataset besar untuk table detection dan recognition melalui weak supervision dari dokumen Word dan LaTeX (Li et al., 2020). PubTables-1M menyediakan hampir satu juta tabel dengan ground truth yang lebih lengkap dan mengatasi masalah inconsistency seperti oversegmentation (Smock et al., 2022). TableFormer menggunakan Transformer untuk table structure recognition dan melaporkan peningkatan TEDS pada tabel sederhana dan kompleks (Nassar et al., 2022). Smock et al. (2023) juga menekankan bahwa konsistensi benchmark table structure recognition sangat mempengaruhi performa dan evaluasi model.
 
-Pada dokumen semi-terstruktur, table understanding membantu memisahkan informasi yang berada dalam baris item dari informasi ringkasan. Pemisahan ini penting karena tabel sering mengandung hubungan hierarkis antara item, subtotal, pajak, diskon, dan total. Dengan demikian, metode ekstraksi berbasis baris, kolom, atau table parser menjadi relevan sebagai sumber struktur sebelum informasi dievaluasi lebih lanjut.
+Pada dokumen dengan format tidak tetap, table understanding membantu memisahkan informasi yang berada dalam baris item dari informasi ringkasan. Pemisahan ini penting karena tabel sering mengandung hubungan hierarkis antara item, subtotal, pajak, diskon, dan total. Dengan demikian, metode ekstraksi berbasis baris, kolom, atau table parser menjadi relevan sebagai sumber struktur sebelum informasi dievaluasi lebih lanjut.
 
-## 2.5 OCR-Free, VLM, dan LLM untuk Document Understanding
+## 2.5 Model Generatif Dokumen
 
 Pendekatan OCR-free mencoba memahami dokumen langsung dari gambar tanpa menjadikan OCR sebagai tahap terpisah. Donut merupakan salah satu model penting karena melakukan document understanding dengan Transformer tanpa OCR engine tradisional dan menunjukkan bahwa OCR dependency dapat menyebabkan biaya komputasi, error propagation, serta keterbatasan bahasa atau domain (Kim et al., 2022). Nougat memperluas gagasan OCR-free untuk dokumen akademik dengan menghasilkan markup dari halaman ilmiah (Blecher et al., 2023).
 
@@ -41,9 +41,9 @@ Perkembangan Vision-Language Model (VLM) dan Multimodal Large Language Model (ML
 
 Di sisi lain, LLM berbasis teks tetap relevan untuk ekstraksi dari OCR output. LMDX menunjukkan penggunaan language model untuk document information extraction dan localization dengan perhatian pada grounding (Perot et al., 2023). Gupta et al. (2021) menunjukkan bahwa language model dapat membantu post-OCR correction dengan multi-view OCR, tetapi juga menekankan risiko unconstrained generation pada skenario yang membutuhkan ketelitian. Chen et al. (2025) mengevaluasi prompt engineering untuk document information extraction dan menunjukkan bahwa rancangan prompt, schema, dan post-processing berpengaruh terhadap hasil ekstraksi. Hu et al. (2025) menunjukkan pemanfaatan LLM untuk key information extraction pada tabel tidak standar.
 
-Literatur terbaru juga mulai membandingkan kebutuhan OCR dalam era MLLM. Shen et al. (2026) melakukan benchmarking pada business-document information extraction dan menunjukkan bahwa image-only pipeline dapat bersaing dengan pendekatan OCR-enhanced pada model tertentu, terutama ketika schema, exemplar, dan instruksi dirancang dengan baik. Namun, OCR tetap memiliki nilai praktis karena menyediakan teks, posisi, dan confidence yang dapat digunakan untuk audit serta integrasi dengan proses ekstraksi yang lebih ringan.
+Kajian terbaru juga mulai membandingkan kebutuhan OCR dalam era MLLM. Shen et al. (2026) melakukan benchmarking pada business-document information extraction dan menunjukkan bahwa image-only pipeline dapat bersaing dengan pendekatan OCR-enhanced pada model tertentu, terutama ketika schema, exemplar, dan instruksi dirancang dengan baik. Namun, OCR tetap memiliki nilai praktis karena menyediakan teks, posisi, dan confidence yang dapat digunakan untuk audit serta integrasi dengan proses ekstraksi yang lebih ringan.
 
-## 2.6 Confidence Calibration, Selective Prediction, dan Human-in-the-Loop
+## 2.6 Confidence-Aware Processing
 
 Confidence score banyak digunakan untuk menyatakan tingkat keyakinan model, tetapi skor tersebut tidak selalu setara dengan probabilitas kebenaran. Guo et al. (2017) menunjukkan bahwa neural network modern sering kali tidak terkalibrasi dengan baik, sehingga confidence tinggi belum tentu mencerminkan peluang benar yang tinggi. Konsep selective classification dari Geifman dan El-Yaniv (2017) memberikan dasar teoretis bahwa sistem dapat menolak prediksi pada kasus tertentu untuk menukar coverage dengan risiko kesalahan yang lebih rendah.
 
@@ -51,7 +51,7 @@ Dalam konteks KIE, Rombach dan Mehdiyev (2026) membahas penggunaan conformal pre
 
 Human-in-the-loop (HITL) sering digunakan sebagai mekanisme pengendalian risiko pada sistem otomatis. Pada workflow ekstraksi dokumen, validasi manusia dapat ditempatkan pada kasus yang tidak memenuhi ambang kepercayaan atau gagal aturan validasi. Jika koreksi manusia disimpan, koreksi tersebut juga dapat menjadi sumber informasi untuk dokumen dengan template serupa. Kerangka ini sejalan dengan prinsip AI risk management yang menekankan pengendalian, transparansi, dan monitoring pada sistem AI yang digunakan dalam proses penting (NIST, 2023).
 
-## 2.7 State of the Art dan Posisi Penelitian
+## 2.7 State of the Art
 
 Tabel berikut merangkum pendekatan state of the art (SOTA) pada beberapa area yang berkaitan dengan pemrosesan dokumen, yaitu OCR modern, document layout parsing, OCR-free/VLM, OCR+LLM hybrid, dan confidence-aware KIE.
 
@@ -68,18 +68,6 @@ Tabel berikut merangkum pendekatan state of the art (SOTA) pada beberapa area ya
 | Rombach & Mehdiyev (2026) | Confidence-aware KIE dengan Split Conformal Prediction. | Pada receipt KIE, conformal prediction mencapai marginal coverage 98,3% untuk α = 0,02. Sekitar 70% prediksi menjadi high-confidence singleton; 94% prediksi memiliki set size maksimal 2; average prediction set width = 1,38. Field terstruktur seperti `Prod_price_v` memiliki average set size 1,13 dan coverage 99,51%, sedangkan field lebih ambigu seperti `Tips_v` memiliki average set size 2,24 dan coverage 93,1%. | Fokus pada uncertainty quantification, bukan orkestrasi OCR/rule/LLM/VLM. Namun, paper ini sangat relevan sebagai dasar bahwa confidence perlu dipakai untuk selective automation dan human review. |
 
 Ringkasan SOTA menunjukkan bahwa perkembangan terbaru bergerak ke arah model yang lebih kuat, benchmark yang lebih luas, dan pipeline multimodal yang semakin fleksibel. Namun, sebagian besar pendekatan masih menilai performa pada level task atau dokumen. Ruang kontribusi yang masih terbuka adalah mekanisme yang mengatur jalur pemrosesan pada unit informasi yang lebih kecil dengan mempertimbangkan confidence, risiko, dan biaya pemrosesan.
-
-## 2.8 Gap Penelitian
-
-Berdasarkan tinjauan pustaka, terdapat beberapa gap yang menjadi dasar penelitian ini.
-
-1. Banyak penelitian document understanding berfokus pada peningkatan akurasi model, tetapi belum menjadikan keputusan accept, escalate, dan review pada level field sebagai pusat workflow.
-2. Pendekatan VLM dan OCR-free semakin kuat, tetapi penggunaan model besar untuk semua field belum tentu efisien dari sisi latency, biaya, dan auditabilitas.
-3. Pendekatan OCR+LLM hybrid sudah mulai muncul, tetapi sebagian besar routing masih dilakukan pada level format dokumen atau strategi pipeline, bukan pada level field yang memiliki risiko berbeda.
-4. Confidence calibration dan selective prediction sudah banyak dibahas dalam machine learning, tetapi penerapannya pada IDP operasional masih perlu disesuaikan dengan validasi skema, konteks bisnis, dan kebutuhan human review.
-5. Dokumen administratif berbahasa Indonesia memiliki karakteristik lokal seperti format rupiah, PPN, NPWP, singkatan, stempel, tanda tangan, serta variasi layout yang belum banyak menjadi fokus evaluasi.
-
-Gap tersebut menunjukkan perlunya pendekatan orkestrasi ekstraksi yang tidak hanya mengejar akurasi model, tetapi juga mempertimbangkan confidence, risiko, dan biaya pemrosesan pada unit informasi yang diekstraksi.
 
 ## Daftar Pustaka
 
@@ -162,4 +150,9 @@ Yu, W., Lu, N., Qi, X., Gong, P., & Xiao, R. (2021). PICK: Processing key inform
 Zhao, Z., Kang, H., Wang, B., & He, C. (2024). *DocLayout-YOLO: Enhancing document layout analysis through diverse synthetic data and global-to-local adaptive perception*. arXiv. https://arxiv.org/abs/2410.12628
 
 Zhong, X., Tang, J., & Yepes, A. J. (2019). PubLayNet: Largest dataset ever for document layout analysis. *ICDAR 2019*. https://arxiv.org/abs/1908.07836
+
+
+
+
+
 

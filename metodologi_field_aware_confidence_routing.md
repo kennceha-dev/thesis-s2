@@ -5,15 +5,15 @@
 
 ```mermaid
 flowchart LR
-    A["Masalah<br/>Ekstraksi dokumen administratif tidak stabil<br/>dan model besar tidak efisien untuk semua field"] --> B["Solusi Usulan<br/>Field-aware confidence routing<br/>untuk keputusan per field"]
-    B --> C["Mekanisme<br/>OCR + layout, kandidat field,<br/>confidence scoring, dan routing adaptif"]
+    A["Masalah<br/>Ekstraksi dokumen administrasi tidak stabil<br/>dan model besar tidak efisien untuk semua field"] --> B["Solusi Usulan<br/>Field-aware confidence routing<br/>untuk keputusan per field"]
+    B --> C["Mekanisme<br/>OCR + layout, calon nilai,<br/>confidence scoring, dan routing adaptif"]
     C --> D["Evaluasi<br/>Akurasi field, false accept,<br/>latency, escalation rate,<br/>dan STP rate"]
     D --> E["Hasil Akhir<br/>IDP yang lebih adaptif,<br/>efisien, dan dapat diaudit"]
 ```
 
 **Gambar 3.1 Diagram Kerangka Pikir**
 
-Kerangka pikir penelitian ini dimulai dari pengamatan bahwa dokumen administratif berbahasa Indonesia tidak selalu dapat diproses secara stabil menggunakan satu jalur ekstraksi. Variasi layout, kualitas gambar, format penulisan lokal, serta elemen visual non-teks dapat mempengaruhi keberhasilan OCR dan ekstraksi informasi. OCR dan rule sederhana tetap penting sebagai jalur awal yang efisien, tetapi model yang lebih kuat juga diperlukan pada kasus yang sulit. Tantangannya adalah menentukan kapan jalur ringan sudah cukup dan kapan eskalasi diperlukan.
+Kerangka pikir penelitian ini dimulai dari pengamatan bahwa dokumen administrasi berbahasa Indonesia tidak selalu dapat diproses secara stabil menggunakan satu jalur ekstraksi. Variasi layout, kualitas gambar, format penulisan lokal, serta elemen visual non-teks dapat mempengaruhi keberhasilan OCR dan ekstraksi informasi. OCR dan rule sederhana tetap penting sebagai jalur awal yang efisien, tetapi model yang lebih kuat juga diperlukan pada kasus yang sulit. Tantangannya adalah menentukan kapan jalur ringan sudah cukup dan kapan eskalasi diperlukan.
 
 Berdasarkan masalah tersebut, penelitian ini menempatkan field sebagai unit keputusan utama. Setiap field dapat memiliki tingkat kesulitan, risiko, dan kualitas kandidat yang berbeda dalam satu dokumen. Field-aware confidence routing digunakan untuk menghitung confidence pada unit tersebut dan menentukan jalur pemrosesan yang sesuai berdasarkan hasil penilaian tersebut.
 
@@ -25,23 +25,23 @@ Mekanisme utama terdiri dari OCR dan layout detection, candidate field extractio
 
 ```mermaid
 flowchart LR
-    A["Dataset<br/>Pemilihan dokumen<br/>dan target schema"] --> B["Persiapan Data<br/>Ground truth JSON,<br/>normalisasi, dan split data"]
-    B --> C["Ekstraksi Kandidat<br/>OCR, layout detection,<br/>alias, regex, spatial, table"]
-    C --> D["Kalibrasi Confidence<br/>Bobot sinyal, penalti risiko,<br/>dan threshold routing"]
-    D --> E["Sistem Routing<br/>Accept, text-LLM,<br/>VLM crop, dan human review flag"]
+    A["Dataset<br/>Pemilihan dokumen<br/>target schema"] --> B["Persiapan Data<br/>Ground truth JSON<br/>normalisasi<br/>split data"]
+    B --> C["Ekstraksi Calon Nilai<br/>OCR<br/>layout detection<br/>alias, regex, spatial, table"]
+    C --> D["Kalibrasi Confidence<br/>Bobot Petunjuk, penalti risiko,<br/>dan threshold routing"]
+    D --> E["Sistem Routing<br/>Accept<br/>text-LLM<br/>VLM crop<br/>human review flag"]
 ```
 
 **Gambar 3.2 Diagram Langkah Penelitian**
 
-### 3.2.1 Dataset dan Target Schema
+### 3.2.1 Dataset
 
-Penelitian ini menggunakan dokumen administratif berbahasa Indonesia sebagai objek penelitian. Data berasal dari dataset publik yang relevan atau dari dokumen administratif yang telah dianonimkan.
+Penelitian ini menggunakan dokumen administrasi berbahasa Indonesia sebagai objek penelitian. Data berasal dari dataset publik yang relevan atau dari dokumen administrasi yang telah dianonimkan.
 
 Pada tahap ini ditentukan target schema yang akan digunakan dalam seluruh eksperimen. Jika menggunakan dataset publik, label asli dataset dipetakan ke schema penelitian. Tidak semua dokumen harus memiliki seluruh field target; field yang tidak muncul pada dokumen diberi nilai `null` pada ground truth.
 
 Penetapan schema dilakukan sebelum eksperimen dijalankan agar sistem tidak menyesuaikan field secara manual untuk setiap dokumen. Dengan demikian, penelitian tetap bersifat schema-driven, tetapi tidak bergantung pada input label per dokumen. Field configuration hanya berisi tipe data, alias label, aturan validasi, dan tingkat risiko untuk setiap field.
 
-### 3.2.2 Persiapan Data dan Ground Truth
+### 3.2.2 Persiapan Data
 
 Setelah dataset dan schema ditetapkan, seluruh data disiapkan ke dalam format eksperimen yang seragam. Setiap dokumen diberi `document_id`, file gambar atau PDF, dan ground truth dalam format JSON. Ground truth disusun mengikuti schema penelitian sehingga output dari setiap metode dapat dibandingkan secara langsung. Nilai nominal dinormalisasi menjadi angka, misalnya `Rp. 22.000`, `22,000`, dan `22000` diperlakukan sebagai nilai yang sama jika konteksnya adalah rupiah. Nilai tanggal juga dinormalisasi ke format standar yang ditentukan. Untuk line item, ground truth disimpan sebagai daftar objek yang berisi nama item, kuantitas jika tersedia, dan harga.
 
@@ -49,39 +49,39 @@ Data kemudian dibagi menjadi data pengembangan, validasi, dan pengujian. Data pe
 
 Pada tahap ini juga dilakukan verifikasi dasar terhadap data. Verifikasi mencakup kesesuaian `document_id`, kelengkapan ground truth, konsistensi format JSON, serta keberhasilan normalisasi nilai tanggal dan nominal. Langkah ini diperlukan agar evaluasi akhir benar-benar mengukur metode ekstraksi dan routing, bukan kesalahan format data.
 
-### 3.2.3 Ekstraksi Kandidat Field
+### 3.2.3 Candidate Field Extraction
 
 Tahap ekstraksi kandidat dimulai dengan menjalankan OCR pada setiap dokumen untuk menghasilkan teks, bounding box, dan confidence OCR. Hasil OCR kemudian diproses melalui layout detection sederhana. Token OCR dikelompokkan menjadi baris berdasarkan koordinat vertikal, kemudian baris yang berdekatan dikelompokkan menjadi region. Jika ditemukan pola alignment kolom yang berulang, region tersebut ditandai sebagai kandidat tabel.
 
-Setelah struktur awal diperoleh, sistem menghasilkan kandidat field menggunakan sinyal tekstual, spasial, struktural, dan semantik. Label alias digunakan sebagai anchor, spatial proximity menghubungkan anchor dengan kandidat nilai, regex memeriksa kecocokan tipe data, table position membantu membaca struktur baris dan kolom, sedangkan semantic similarity membantu ketika label tidak sama secara literal dengan alias yang tersedia.
+Setelah struktur awal diperoleh, sistem menghasilkan calon nilai menggunakan petunjuk berbasis teks, spasial, struktural, dan semantik. Label alias digunakan sebagai anchor, spatial proximity menghubungkan anchor dengan kandidat nilai, regex memeriksa kecocokan tipe data, table position membantu membaca struktur baris dan kolom, sedangkan semantic similarity membantu ketika label tidak sama secara literal dengan alias yang tersedia.
 
-Pada dokumen semi-terstruktur, informasi tabel dipisahkan berdasarkan pola baris dan kolom. Baris detail dan baris ringkasan diperlakukan sebagai jenis kandidat yang berbeda. Hasil dari tahap ini belum menjadi keputusan final, melainkan daftar kandidat yang akan dinilai pada tahap confidence scoring.
+Pada dokumen dengan format tidak tetap, informasi tabel dipisahkan berdasarkan pola baris dan kolom. Baris detail dan baris ringkasan diperlakukan sebagai jenis kandidat yang berbeda. Hasil dari tahap ini belum menjadi keputusan final, melainkan daftar kandidat yang akan dinilai pada tahap confidence scoring.
 
-### 3.2.4 Kalibrasi Confidence dan Threshold Routing
+### 3.2.4 Kalibrasi Routing
 
-Setelah kandidat field terbentuk, akan dilanjutkan dengan menghitung confidence score pada tiap fieldnya. Komponen scoring meliputi kualitas OCR, kecocokan label, kedekatan spasial, validasi schema, konsistensi konteks, dan kesepakatan kandidat.
+Setelah calon nilai terbentuk, akan dilanjutkan dengan menghitung confidence score pada tiap fieldnya. Komponen scoring meliputi kualitas OCR, kecocokan label, kedekatan spasial, validasi schema, konsistensi konteks, dan kesepakatan kandidat.
 
 Bobot confidence, penalti risiko, dan threshold routing dikalibrasi menggunakan data validasi. Beberapa kombinasi bobot dan threshold diuji, kemudian hasilnya dibandingkan berdasarkan field-level exact match, false accept rate, escalation rate, latency, dan cost proxy. Pemilihan kombinasi akhir tidak hanya berdasarkan akurasi tertinggi. Untuk field berisiko tinggi seperti `total_amount`, kombinasi dengan false accept rate lebih rendah lebih diutamakan, meskipun jumlah field yang dieskalasi sedikit lebih besar. Jika dua kombinasi memiliki akurasi dan false accept yang mirip, kombinasi dengan escalation rate dan latency lebih rendah dipilih.
 
 Tahap ini juga menentukan indikator ketidakpastian tekstual dan visual. Ketidakpastian tekstual muncul ketika OCR cukup terbaca, tetapi label, kandidat, atau normalisasi masih ambigu. Ketidakpastian visual muncul ketika OCR confidence rendah, terdapat karakter ambigu seperti `O/0`, `I/1`, atau `S/5`, format nominal terlihat mencurigakan, atau validasi menunjukkan kemungkinan ada karakter yang hilang. Perbedaan ini penting karena ketidakpastian tekstual diarahkan ke text-only LLM, sedangkan ketidakpastian visual lebih sesuai diarahkan ke VLM crop.
 
-### 3.2.5 Sistem Routing dan Output
+### 3.2.5 Sistem Routing
 
 Tahap terakhir menyatukan seluruh komponen ke dalam sistem routing. Untuk setiap field, sistem menerima kandidat nilai dan confidence score, kemudian menentukan jalur pemrosesan. Field dengan confidence tinggi dan lolos validasi kritis diterima otomatis melalui jalur OCR/rule. Field dengan confidence rendah karena masalah makna, label, atau normalisasi dikirim ke text-only LLM dengan konteks OCR terbatas. Field dengan indikasi masalah visual atau OCR dikirim ke VLM menggunakan expanded crop yang mencakup nilai, label terdekat, dan margin sekitar. Field yang tetap tidak valid atau berisiko tinggi ditandai sebagai human review.
 
-Output sistem disimpan dalam JSON yang memuat nilai asli, nilai ternormalisasi, route yang digunakan, confidence, status validasi, dan keputusan akhir. Metadata ini penting untuk audit karena peneliti dapat melihat apakah kesalahan berasal dari OCR, kandidat field, confidence scoring, routing, atau model eskalasi. Human review dalam penelitian ini dapat diposisikan sebagai flag atau simulasi pada ablation study. Jika tidak dibangun antarmuka koreksi penuh, field yang ditandai human review tetap dapat dihitung sebagai beban review dan digunakan untuk mengukur pengaruh HITL terhadap false accept dan akurasi akhir.
+Output sistem disimpan dalam JSON yang memuat nilai asli, nilai ternormalisasi, route yang digunakan, confidence, status validasi, dan keputusan akhir. Metadata ini penting untuk audit karena peneliti dapat melihat apakah kesalahan berasal dari OCR, calon nilai, confidence scoring, routing, atau model eskalasi. Human review dalam penelitian ini dapat diposisikan sebagai flag atau simulasi pada ablation study. Jika tidak dibangun antarmuka koreksi penuh, field yang ditandai human review tetap dapat dihitung sebagai beban review dan digunakan untuk mengukur pengaruh HITL terhadap false accept dan akurasi akhir.
 
-## 3.3 Rancangan Algoritma Field-Aware Confidence Routing
+## 3.3 Rancangan Algoritma Routing
 
-Algoritma yang diusulkan terdiri dari tiga bagian utama, yaitu ekstraksi kandidat field, perhitungan confidence, dan keputusan routing. Ketiga bagian ini dirancang agar dapat diaudit, sehingga setiap keputusan sistem dapat ditelusuri kembali ke sinyal yang digunakan.
+Algoritma yang diusulkan terdiri dari tiga bagian utama, yaitu ekstraksi calon nilai, perhitungan confidence, dan keputusan routing. Ketiga bagian ini dirancang agar dapat diaudit, sehingga setiap keputusan sistem dapat ditelusuri kembali ke petunjuk yang digunakan.
 
-### 3.3.1 Ekstraksi Kandidat Field
+### 3.3.1 Ekstraksi Calon Nilai
 
-Ekstraksi kandidat field dimulai dari hasil OCR berupa teks, bounding box, dan confidence. Sistem kemudian melakukan layout detection sederhana dengan mengelompokkan token OCR menjadi baris berdasarkan koordinat vertikal, mengelompokkan baris menjadi region, dan mengenali area tabel jika terdapat pola kolom yang berulang.
+Ekstraksi calon nilai dimulai dari hasil OCR berupa teks, bounding box, dan confidence. Sistem kemudian melakukan layout detection sederhana dengan mengelompokkan token OCR menjadi baris berdasarkan koordinat vertikal, mengelompokkan baris menjadi region, dan mengenali area tabel jika terdapat pola kolom yang berulang.
 
-Setelah struktur awal terbentuk, sistem mencari kandidat field menggunakan beberapa sinyal:
+Setelah struktur awal terbentuk, sistem mencari calon nilai menggunakan beberapa petunjuk:
 
-| Sinyal | Fungsi | Contoh |
+| Petunjuk | Fungsi | Contoh |
 |---|---|---|
 | Label alias | Mencari label yang sesuai dengan schema field. | `PPN` dipetakan ke `tax`. |
 | Spatial proximity | Mencari nilai yang dekat dengan label. | Nilai di kanan `Tanggal` dipilih sebagai kandidat tanggal. |
@@ -89,7 +89,7 @@ Setelah struktur awal terbentuk, sistem mencari kandidat field menggunakan beber
 | Table position | Membedakan line item dan summary field. | Baris `Total 22,000` di bawah tabel dipetakan ke `total_amount`. |
 | Semantic similarity | Membantu mengenali label yang tidak ada di alias. | `Jumlah Pembayaran` dipetakan ke `total_amount`. |
 
-Untuk dokumen semi-terstruktur, pemisahan item dan ringkasan dilakukan dengan logika baris. Baris detail dan baris ringkasan diklasifikasikan berdasarkan pola teks, pola angka, posisi, dan keberadaan anchor summary.
+Untuk dokumen dengan format tidak tetap, pemisahan item dan ringkasan dilakukan dengan aturan berbasis baris. Baris detail dan baris ringkasan diklasifikasikan berdasarkan pola teks, pola angka, posisi, dan keberadaan anchor summary.
 
 Contoh hasil kandidat:
 
@@ -105,7 +105,7 @@ Contoh hasil kandidat:
 }
 ```
 
-### 3.3.2 Perhitungan Confidence Score
+### 3.3.2 Confidence Score
 
 Confidence score dihitung untuk setiap field. Misalkan dokumen memiliki daftar field target:
 
@@ -113,7 +113,7 @@ $$
 F(d) = \{f_1, f_2, ..., f_n\}
 $$
 
-Untuk setiap field \(f_i\), sistem menghasilkan kandidat nilai \(\hat{y}_i\). Confidence awal dihitung dari kombinasi sinyal berikut:
+Untuk setiap field \(f_i\), sistem menghasilkan kandidat nilai \(\hat{y}_i\). Confidence awal dihitung dari kombinasi petunjuk berikut:
 
 | Simbol | Komponen | Penjelasan |
 |---|---|---|
@@ -136,7 +136,7 @@ $$
 \sum_{j=1}^{6} w_j = 1
 $$
 
-Jika terdapat sinyal yang tidak tersedia, bobot dihitung ulang hanya pada sinyal yang tersedia. Setelah itu, sistem memberi penalti untuk kondisi yang berisiko, seperti format nominal mencurigakan, karakter ambigu, field wajib kosong, atau konflik validasi. Confidence akhir dihitung sebagai berikut:
+Jika terdapat Petunjuk yang tidak tersedia, bobot dihitung ulang hanya pada Petunjuk yang tersedia. Setelah itu, sistem memberi penalti untuk kondisi yang berisiko, seperti format nominal mencurigakan, karakter ambigu, field wajib kosong, atau konflik validasi. Confidence akhir dihitung sebagai berikut:
 
 $$
 C_{final,i} = \max(0, S_i - \lambda P_i)
@@ -146,7 +146,7 @@ Nilai \(P_i\) merepresentasikan penalti risiko, sedangkan \(\lambda\) mengatur b
 
 Kalibrasi dilakukan dengan menguji beberapa kombinasi bobot dan threshold pada data validasi. Setiap kombinasi dijalankan pada pipeline yang sama, kemudian dicatat field-level exact match, false accept rate, escalation rate, latency, dan cost proxy. Kombinasi dipilih bukan hanya berdasarkan akurasi tertinggi, tetapi berdasarkan keseimbangan antara akurasi dan risiko. Jika dua kombinasi menghasilkan akurasi yang mirip, kombinasi dengan false accept rate lebih rendah pada field berisiko tinggi dipilih. Jika false accept rate juga sama, kombinasi dengan escalation rate dan latency lebih rendah dipilih.
 
-### 3.3.3 Keputusan Routing
+### 3.3.3 Routing
 
 Keputusan routing dibuat berdasarkan confidence akhir dan jenis ketidakpastian. Sistem membedakan ketidakpastian tekstual dan ketidakpastian visual. Ketidakpastian tekstual terjadi ketika OCR cukup terbaca, tetapi makna label, pemilihan kandidat, atau normalisasi nilai masih ambigu. Ketidakpastian visual terjadi ketika OCR confidence rendah, format terlihat rusak, terdapat karakter mencurigakan, atau validasi menunjukkan kemungkinan ada karakter yang hilang.
 
@@ -172,7 +172,7 @@ Human review digunakan sebagai flag untuk field yang masih tidak valid atau beri
 
 Evaluasi dilakukan untuk mengetahui apakah metode field-aware confidence routing memberikan keseimbangan yang lebih baik antara akurasi, efisiensi, dan pengendalian risiko dibandingkan baseline. Evaluasi dilakukan pada data pengujian yang tidak digunakan untuk membuat rule, mengatur bobot confidence, atau menentukan threshold.
 
-Rancangan evaluasi disusun agar menjawab pertanyaan penelitian secara langsung. Evaluasi candidate field extraction digunakan untuk menilai apakah sistem mampu menghasilkan kandidat field yang benar dari OCR dan layout. Evaluasi confidence dan routing digunakan untuk menilai apakah sistem mampu membedakan field yang aman diterima dari field yang perlu dieskalasi. Evaluasi baseline digunakan untuk menilai apakah field-level routing lebih baik dibanding pendekatan OCR-only, OCR+rule, OCR+LLM semua field, direct VLM semua field, dan document-level routing. Evaluasi HITL digunakan sebagai ablation untuk menilai pengaruh review manusia terhadap false accept dan beban kerja.
+Rancangan evaluasi disusun agar menjawab pertanyaan penelitian secara langsung. Evaluasi ekstraksi calon nilai digunakan untuk menilai apakah sistem mampu menghasilkan calon nilai yang benar dari OCR dan layout. Evaluasi confidence dan routing digunakan untuk menilai apakah sistem mampu membedakan field yang aman diterima dari field yang perlu dieskalasi. Evaluasi baseline digunakan untuk menilai apakah field-level routing lebih baik dibanding pendekatan OCR-only, OCR+rule, OCR+LLM semua field, direct VLM semua field, dan document-level routing. Evaluasi HITL digunakan sebagai ablation untuk menilai pengaruh review manusia terhadap false accept dan beban kerja.
 
 Metode usulan dibandingkan dengan beberapa baseline berikut:
 
@@ -218,4 +218,9 @@ Sebelum dibandingkan dengan ground truth, seluruh output dinormalisasi terlebih 
 Analisis hasil dilakukan dengan membandingkan akurasi, false accept rate, jumlah eskalasi, latency, cost proxy, dan STP rate dari setiap metode. Untuk memperkuat validitas perbandingan, hasil per-field atau per-dokumen dapat diuji menggunakan uji statistik berpasangan. Jika metrik berbentuk benar/salah, McNemar test dapat digunakan untuk membandingkan dua metode pada pasangan data yang sama. Jika metrik berupa skor atau latency yang tidak berdistribusi normal, Wilcoxon signed-rank test dapat digunakan. Uji statistik ini bersifat pendukung dan digunakan untuk memastikan bahwa perbedaan performa tidak hanya terjadi karena variasi sampel.
 
 Keberhasilan metode usulan dinilai dari tiga aspek. Pertama, metode usulan menghasilkan field-level exact match yang kompetitif atau lebih baik dibanding baseline. Kedua, metode usulan menurunkan false accept rate pada field berisiko tinggi. Ketiga, metode usulan mengurangi penggunaan LLM/VLM dibanding baseline yang menggunakan model besar untuk semua field, sehingga latency dan cost proxy tetap terkendali.
+
+
+
+
+
 
