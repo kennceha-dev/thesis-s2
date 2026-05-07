@@ -9,7 +9,7 @@ flowchart TD
 
     B["Landasan Teknis<br/>OCR<br/>layout analysis<br/>KIE<br/>LLM/VLM"] --> E["Rancangan Sistem<br/>field candidate extraction<br/>confidence scoring<br/>adaptive routing"]
 
-    C["Landasan Routing<br/>confidence calibration<br/>selective prediction<br/>human validation"] --> E
+    C["Landasan Routing<br/>confidence calibration<br/>selective prediction<br/>cost-aware escalation<br/>human validation"] --> E
     D --> E
 
     E --> F["Jalur Ekstraksi Level Field<br/>accept<br/>text-LLM<br/>VLM crop<br/>human review"]
@@ -21,17 +21,17 @@ flowchart TD
 
 **Gambar 3.1 Diagram Kerangka Pikir**
 
-[ADD IMAGE HERE: Diagram kerangka pikir konseptual berbentuk beberapa kotak terhubung yang menunjukkan hubungan antara kondisi dokumen transaksi Indonesia, masalah ekstraksi, landasan teknis OCR/layout/KIE/LLM/VLM, landasan routing berbasis confidence/selective prediction/human validation, rancangan field-aware confidence routing, evaluasi, dan kontribusi akhir.]
+[ADD IMAGE HERE: Diagram kerangka pikir konseptual berbentuk beberapa kotak terhubung yang menunjukkan hubungan antara kondisi dokumen transaksi Indonesia, masalah ekstraksi, landasan teknis OCR/layout/KIE/LLM/VLM, landasan routing berbasis confidence/selective prediction/cost-aware escalation/human validation, rancangan confidence-guided field-level routing, evaluasi, dan kontribusi akhir.]
 
 Kerangka pikir penelitian ini disusun sebagai hubungan antara kondisi dokumen, landasan teknis, landasan penentuan rute ekstraksi, rancangan sistem, dan evaluasi. Kondisi awal yang menjadi perhatian adalah dokumen transaksi, invoice, receipt, dan laporan keuangan berbahasa Indonesia yang memiliki variasi layout, kualitas gambar, format penulisan lokal, serta elemen visual non-teks. Variasi tersebut dapat menyebabkan hasil OCR dan ekstraksi informasi tidak selalu stabil.
 
 Penelitian ini memanfaatkan kajian pada OCR, layout analysis, Key Information Extraction, serta model berbasis LLM dan VLM. OCR dan layout analysis menyediakan teks, posisi, dan struktur awal dokumen. KIE digunakan untuk memetakan informasi dokumen ke field yang dievaluasi. LLM dan VLM diposisikan sebagai jalur pemrosesan yang lebih kuat ketika hasil dari jalur ringan belum cukup meyakinkan.
 
-Untuk penentuan rute ekstraksi, penelitian ini menggunakan gagasan confidence calibration, selective prediction, dan human validation. Confidence tidak dipahami sebagai skor tunggal untuk seluruh dokumen, melainkan sebagai ukuran keyakinan pada unit field. Selective prediction memberi dasar bahwa sistem dapat menerima hasil yang cukup yakin dan menunda atau mengalihkan hasil yang berisiko. Human validation diposisikan sebagai mekanisme pengendalian risiko untuk kasus yang tidak memenuhi ambang kepercayaan.
+Untuk penentuan rute ekstraksi, penelitian ini menggunakan gagasan confidence calibration, selective prediction, cost-aware escalation, dan human validation. Confidence tidak dipahami sebagai skor tunggal untuk seluruh dokumen, melainkan sebagai ukuran keyakinan pada unit field. Selective prediction memberi dasar bahwa sistem dapat menerima hasil yang cukup yakin dan menunda atau mengalihkan hasil yang berisiko. Cost-aware escalation digunakan agar LLM dan VLM tidak dipakai merata pada semua field, melainkan hanya ketika jalur OCR/rule tidak cukup memadai. Human validation diposisikan sebagai mekanisme pengendalian risiko untuk kasus yang tidak memenuhi ambang kepercayaan.
 
-Berdasarkan hubungan tersebut, rancangan sistem diarahkan pada field-aware confidence routing. Sistem menghasilkan field candidate, menghitung confidence, lalu menentukan rute ekstraksi pada level field. Jalur yang mungkin dipilih adalah menerima hasil OCR/rule, mengirim konteks OCR ke text-only LLM, mengirim crop gambar ke VLM, atau menandai field untuk human review. Dengan kerangka ini, model besar tidak digunakan secara merata pada seluruh dokumen, tetapi hanya pada bagian yang membutuhkan pemrosesan lebih kuat.
+Berdasarkan hubungan tersebut, rancangan sistem diarahkan pada confidence-guided field-level routing. Sistem menghasilkan field candidate, menghitung confidence, lalu menentukan rute ekstraksi pada level field. Jalur yang mungkin dipilih adalah menerima hasil OCR/rule, mengirim konteks OCR ke text-only LLM, mengirim crop gambar ke VLM, atau menandai field untuk human review. Dengan kerangka ini, model besar tidak digunakan secara merata pada seluruh dokumen, tetapi hanya pada bagian yang membutuhkan pemrosesan lebih kuat.
 
-Evaluasi dilakukan untuk menilai apakah kerangka tersebut mampu menghasilkan workflow IDP yang lebih adaptif, efisien, dan dapat diaudit. Ukuran keberhasilan tidak hanya mencakup akurasi field, tetapi juga false accept rate, escalation rate, latency, dan Straight-Through Processing rate. Dengan demikian, kerangka pikir penelitian tidak hanya menempatkan ekstraksi sebagai masalah akurasi, tetapi juga sebagai masalah penentuan rute ekstraksi dan pengendalian risiko.
+Evaluasi dilakukan untuk menilai apakah kerangka tersebut mampu menghasilkan workflow IDP yang lebih adaptif, efisien, dan dapat diaudit. Ukuran keberhasilan tidak hanya mencakup akurasi field, tetapi juga false accept rate, escalation rate, latency, cost proxy, dan Straight-Through Processing rate. Dengan demikian, kerangka pikir penelitian tidak hanya menempatkan ekstraksi sebagai masalah akurasi, tetapi juga sebagai masalah penentuan rute ekstraksi, pengendalian biaya komputasi, dan pengendalian risiko.
 
 ## 3.2 Langkah Penelitian
 
@@ -84,7 +84,7 @@ flowchart TD
 
 **Gambar 3.2 Diagram Langkah Penelitian**
 
-[ADD IMAGE HERE: Diagram langkah penelitian dengan nested box untuk lima tahap utama: Studi Awal, Persiapan Data, Pengembangan Sistem, Validasi, dan Evaluasi. Setiap tahap berisi subaktivitas seperti studi pustaka, target schema, ground truth, OCR-layout, field candidate, confidence scoring, threshold routing, baseline, ablation, dan analisis hasil.]
+[ADD IMAGE HERE: Diagram langkah penelitian dengan nested box untuk lima tahap utama: Studi Awal, Persiapan Data, Pengembangan Sistem, Validasi, dan Evaluasi. Setiap tahap berisi subaktivitas seperti studi pustaka, target schema, ground truth, OCR-layout, field candidate, confidence scoring, cost-aware threshold routing, baseline, ablation, dan analisis hasil.]
 
 ### 3.2.1 Studi Awal
 
@@ -110,7 +110,7 @@ Pada tahap ini juga disiapkan jalur eskalasi berbasis text-only LLM dan VLM. Tex
 
 Parameter sistem ditentukan menggunakan data validasi. Parameter yang divalidasi meliputi bobot confidence, penalti risiko, threshold accept, threshold review, indikator ketidakpastian visual, dan prompt LLM/VLM. Validasi dilakukan sebelum evaluasi akhir agar tidak terjadi penyesuaian berdasarkan data pengujian.
 
-Pemilihan parameter tidak hanya didasarkan pada akurasi tertinggi. Kombinasi parameter dipilih dengan mempertimbangkan field-level exact match, false accept rate, escalation rate, latency, dan cost proxy. Untuk field berisiko tinggi, false accept rate diberi perhatian lebih besar karena kesalahan yang diterima otomatis lebih berbahaya daripada field yang dieskalasi.
+Pemilihan parameter tidak hanya didasarkan pada akurasi tertinggi. Kombinasi parameter dipilih dengan mempertimbangkan field-level exact match, false accept rate, escalation rate, latency, dan cost proxy. Dengan demikian, threshold tidak hanya menentukan apakah field benar atau salah, tetapi juga mengatur seberapa sering sistem memakai jalur komputasi mahal. Untuk field berisiko tinggi, false accept rate diberi perhatian lebih besar karena kesalahan yang diterima otomatis lebih berbahaya daripada field yang dieskalasi.
 
 ### 3.2.5 Evaluasi Akhir
 
@@ -200,7 +200,7 @@ $$
 C_{final,i} = \max(0, S_i - \lambda P_i)
 $$
 
-Nilai \(P_i\) merepresentasikan total penalti risiko, sedangkan \(\lambda\) mengatur besarnya pengaruh penalti. Bobot, penalti, dan threshold ditentukan menggunakan data validasi. Pemilihan parameter tidak hanya berdasarkan akurasi tertinggi, tetapi juga mempertimbangkan false accept rate, escalation rate, latency, dan cost proxy.
+Nilai \(P_i\) merepresentasikan total penalti risiko, sedangkan \(\lambda\) mengatur besarnya pengaruh penalti. Bobot, penalti, dan threshold ditentukan menggunakan data validasi. Pemilihan parameter tidak hanya berdasarkan akurasi tertinggi, tetapi juga mempertimbangkan false accept rate, escalation rate, latency, dan cost proxy agar eskalasi ke LLM/VLM tetap selektif.
 
 ### 3.3.3 Routing
 
@@ -245,11 +245,11 @@ Output akhir setiap field memuat nilai, nilai ternormalisasi, route yang digunak
 ```
 ## 3.4 Evaluasi Eksperimental
 
-Evaluasi dilakukan untuk mengetahui apakah metode field-aware confidence routing memberikan keseimbangan yang lebih baik antara akurasi, efisiensi, dan pengendalian risiko dibandingkan baseline. Evaluasi dilakukan pada data pengujian yang tidak digunakan untuk membuat rule, mengatur bobot confidence, atau menentukan threshold.
+Evaluasi dilakukan untuk mengetahui apakah metode confidence-guided field-level routing memberikan keseimbangan yang lebih baik antara akurasi, efisiensi komputasi, dan pengendalian risiko dibandingkan baseline. Evaluasi dilakukan pada data pengujian yang tidak digunakan untuk membuat rule, mengatur bobot confidence, atau menentukan threshold.
 
-Rancangan evaluasi disusun agar menjawab pertanyaan penelitian secara langsung. Evaluasi ekstraksi field candidate digunakan untuk menilai apakah sistem mampu menghasilkan field candidate yang benar dari OCR dan layout. Evaluasi confidence dan routing digunakan untuk menilai apakah sistem mampu membedakan field yang aman diterima dari field yang perlu dieskalasi. Evaluasi baseline digunakan untuk menilai apakah field-level routing lebih baik dibanding pendekatan OCR-only, OCR+rule, OCR+LLM semua field, direct VLM semua field, dan document-level routing. Evaluasi HITL digunakan sebagai ablation untuk menilai pengaruh review manusia terhadap false accept dan beban kerja.
+Rancangan evaluasi disusun agar menjawab pertanyaan penelitian secara langsung. Evaluasi ekstraksi field candidate digunakan untuk menilai apakah sistem mampu menghasilkan field candidate yang benar dari OCR dan layout. Evaluasi confidence dan routing digunakan untuk menilai apakah sistem mampu membedakan field yang cukup diproses oleh jalur ringan dari field yang perlu dieskalasi ke jalur komputasi lebih tinggi. Evaluasi baseline digunakan untuk menilai apakah field-level routing lebih baik dibanding pendekatan OCR-only, OCR+rule, OCR+LLM semua field, direct VLM semua field, dan document-level routing. Evaluasi HITL digunakan sebagai ablation untuk menilai pengaruh review manusia terhadap false accept dan beban kerja.
 
-[ADD IMAGE HERE: Diagram perbandingan baseline. Tampilkan enam jalur sejajar: OCR-only, OCR+rule, OCR+LLM semua field, Direct VLM semua field, Document-level routing, dan Proposed field-aware routing. Beri penekanan bahwa proposed melakukan routing per field.]
+[ADD IMAGE HERE: Diagram perbandingan baseline. Tampilkan enam jalur sejajar: OCR-only, OCR+rule, OCR+LLM semua field, Direct VLM semua field, Document-level routing, dan Proposed confidence-guided field-level routing. Beri penekanan bahwa proposed melakukan routing per field untuk mengurangi pemakaian model besar.]
 
 Metode usulan dibandingkan dengan beberapa baseline berikut:
 
@@ -260,7 +260,7 @@ Metode usulan dibandingkan dengan beberapa baseline berikut:
 | B3 | OCR + LLM semua field | Semua target field diekstraksi dari konteks OCR menggunakan LLM tanpa routing confidence. |
 | B4 | Direct VLM semua field | Semua target field diekstraksi dari gambar dokumen menggunakan VLM tanpa routing confidence. |
 | B5 | Document-level routing | Satu hasil routing digunakan untuk seluruh dokumen, bukan per field. |
-| Proposed | Field-aware confidence routing | Route accept, text-LLM, VLM-crop, atau human review dipilih pada level field. |
+| Proposed | Confidence-guided field-level routing | Route accept, text-LLM, VLM-crop, atau human review dipilih pada level field untuk mengurangi penggunaan model besar yang tidak diperlukan. |
 
 Jika model LLM atau VLM tertentu tidak dapat direplikasi persis karena keterbatasan sumber daya, penelitian menggunakan model yang tersedia secara fungsional setara dan mencatat konfigurasi tersebut secara eksplisit. Seluruh baseline dijalankan pada split data yang sama, dengan aturan normalisasi dan ground truth yang sama.
 
