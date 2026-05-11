@@ -21,17 +21,15 @@ flowchart TD
 
 **Gambar 3.1 Diagram Kerangka Pikir**
 
-[ADD IMAGE HERE: Diagram kerangka pikir konseptual berbentuk beberapa kotak terhubung yang menunjukkan hubungan antara kondisi dokumen transaksi Indonesia, masalah ekstraksi, landasan teknis OCR/layout/KIE/LLM/VLM, landasan routing berbasis confidence/selective prediction/cost-aware escalation/human validation, rancangan confidence-guided field-level routing, evaluasi, dan kontribusi akhir.]
+Kerangka pikir penelitian ini dimulai dari kesadaran bahwa dokumen transaksi tidak selalu dapat diproses hanya dengan satu jalur ekstraksi. Struk, invoice, kuitansi, dan laporan keuangan bisa memiliki layout, kualitas gambar yang bervariasi. Ada juga hal-hal seperti stempel, tanda tangan, serta catatan tulisan tangan yang mempengaruhi hasil. Pada sebagian field, hasil OCR sederhana sudah cukup untuk menghasilkan nilai yang benar. Namun pada field lain, hasil OCR dapat terlihat valid secara format tetapi sebenarnya salah, ambigu, atau kehilangan informasi yang penting, membuat risiko salah terima tinggi. Sebaliknya, jika seluruh dokumen selalu dikirim ke LLM atau VLM, biaya komputasi dan latency menjadi lebih besar daripada yang diperlukan.
 
-Kerangka pikir penelitian ini disusun sebagai hubungan antara kondisi dokumen, landasan teknis, landasan penentuan rute ekstraksi, rancangan sistem, dan evaluasi. Kondisi awal yang menjadi perhatian adalah dokumen transaksi, invoice, receipt, dan laporan keuangan berbahasa Indonesia yang memiliki variasi layout, kualitas gambar, format penulisan lokal, serta elemen visual non-teks. Variasi tersebut dapat menyebabkan hasil OCR dan ekstraksi informasi tidak selalu stabil.
+Berdasarkan masalah tersebut, penelitian ini akan menerapkan confidence scoring pada setiap field hasil OCR sebagai pemilih ekstraksi lanjutan. Gagasan utamanya adalah bahwa kebutuhan pemrosesan tidak ditentukan oleh dokumen secara keseluruhan, tetapi oleh kondisi masing-masing field. Field yang memiliki confidence score yang tinggi, label yang jelas, posisi yang sesuai, format yang valid, dan konsisten dengan field-field lain dapat diterima. Sedangkan field yang masih ambigu secara teks dapat dikirim ke text-only LLM dan field yang dicurigai mengalami kerusakan visual atau kesalahan OCR dapat dikirim ke VLM dengan potongan gambar dari dokumen. Untuk field yang masih low confidence setelah proses tersebut akan dipisahkan untuk human review.
 
-Penelitian ini memanfaatkan kajian pada OCR, layout analysis, Key Information Extraction, serta model berbasis LLM dan VLM. OCR dan layout analysis menyediakan teks, posisi, dan struktur awal dokumen. KIE digunakan untuk memetakan informasi dokumen ke field yang dievaluasi. LLM dan VLM diposisikan sebagai jalur pemrosesan yang lebih kuat ketika hasil dari jalur ringan belum cukup meyakinkan.
+Confidence score tidak hanya berasal dari hasil OCR, melainkan sebagai gabungan beberapa poin. Poin tersebut mencakup kualitas OCR, kecocokan label, kedekatan posisi, validasi format, konsistensi konteks, dan kesepakatan antar field candidate. Skor ini digunakan untuk menjawab pertanyaan praktis: apakah nilai field cukup aman diterima otomatis, perlu diperiksa ulang oleh model berbasis teks, perlu dibaca dari gambar, atau harus ditahan untuk review manusia. Karena itu, routing dalam penelitian ini berfungsi sebagai mekanisme untuk memilih tingkat pemrosesan yang sesuai dengan risiko tiap field.
 
-Untuk penentuan rute ekstraksi, penelitian ini menggunakan gagasan confidence calibration, selective prediction, cost-aware escalation, dan human validation. Confidence tidak dipahami sebagai skor tunggal untuk seluruh dokumen, melainkan sebagai ukuran keyakinan pada unit field. Selective prediction memberi dasar bahwa sistem dapat menerima hasil yang cukup yakin dan menunda atau mengalihkan hasil yang berisiko. Cost-aware escalation digunakan agar LLM dan VLM tidak dipakai merata pada semua field, melainkan hanya ketika jalur OCR/rule tidak cukup memadai. Human validation diposisikan sebagai mekanisme pengendalian risiko untuk kasus yang tidak memenuhi ambang kepercayaan.
+Alur sistem yang diusulkan dimulai dari menginput dokumen, kemudian dilakukan OCR dan layout analysis untuk memperoleh teks, bounding box, serta confidence awal. Hasil tersebut digunakan untuk membentuk field candidate melalui label alias, spatial proximity, pola format, posisi tabel, dan kemiripan semantik. Setiap field candidate kemudian diberi confidence score. Jika confidence melewati threshold layak dan validasi terpenuhi, nilai akan diterima sebagai output. Jika tidak, sistem menentukan apakah ketidakpastian lebih bersifat tekstual atau visual. Ketidakpastian tekstual diarahkan ke text-only LLM, sedangkan ketidakpastian visual diarahkan ke VLM crop. Setelah eskalasi selesai, hasil divalidasi ulang sebelum diterima atau ditandai sebagai human review.
 
-Berdasarkan hubungan tersebut, rancangan sistem diarahkan pada confidence-guided field-level routing. Sistem menghasilkan field candidate, menghitung confidence, lalu menentukan rute ekstraksi pada level field. Jalur yang mungkin dipilih adalah menerima hasil OCR/rule, mengirim konteks OCR ke text-only LLM, mengirim crop gambar ke VLM, atau menandai field untuk human review. Dengan kerangka ini, model besar tidak digunakan secara merata pada seluruh dokumen, tetapi hanya pada bagian yang membutuhkan pemrosesan lebih kuat.
-
-Evaluasi dilakukan untuk menilai apakah kerangka tersebut mampu menghasilkan workflow IDP yang lebih adaptif, efisien, dan dapat diaudit. Ukuran keberhasilan tidak hanya mencakup akurasi field, tetapi juga false accept rate, escalation rate, latency, cost proxy, dan Straight-Through Processing rate. Dengan demikian, kerangka pikir penelitian tidak hanya menempatkan ekstraksi sebagai masalah akurasi, tetapi juga sebagai masalah penentuan rute ekstraksi, pengendalian biaya komputasi, dan pengendalian risiko.
+Tahap akhir kerangka pikir adalah evaluasi. Sistem usulan dibandingkan dengan OCR-only, OCR+rule, OCR+LLM untuk semua field, direct VLM untuk semua field, dan routing pada level dokumen. Keberhasilan penelitian dinilai dari dua sisi. Dari sisi kualitas ekstraksi, sistem harus menghasilkan field-level exact match, precision, recall, dan F1-score yang kompetitif atau lebih baik. Dari sisi operasional, sistem diharapkan menurunkan false accept rate, mengendalikan escalation rate, mengurangi latency, dan meningkatkan Straight-Through Processing rate. Kontribusi utama penelitian ini terletak pada mekanisme routing ekstraksi level field yang tidak hanya mengejar akurasi, tetapi juga mengatur kapan model besar benar-benar diperlukan.
 
 ## 3.2 Langkah Penelitian
 
@@ -84,7 +82,6 @@ flowchart TD
 
 **Gambar 3.2 Diagram Langkah Penelitian**
 
-[ADD IMAGE HERE: Diagram langkah penelitian dengan nested box untuk lima tahap utama: Studi Awal, Persiapan Data, Pengembangan Sistem, Validasi, dan Evaluasi. Setiap tahap berisi subaktivitas seperti studi pustaka, target schema, ground truth, OCR-layout, field candidate, confidence scoring, cost-aware threshold routing, baseline, ablation, dan analisis hasil.]
 
 ### 3.2.1 Studi Awal
 
@@ -100,7 +97,6 @@ Pada tahap ini ditentukan target schema, format ground truth, dan pembagian data
 
 ### 3.2.3 Pengembangan Sistem
 
-[ADD IMAGE HERE: Diagram pipeline sistem eksperimen dari input dokumen sampai output JSON. Urutan utama: dokumen gambar/PDF -> preprocessing -> OCR dan layout processing -> field candidate extraction -> confidence scoring -> routing -> text-LLM/VLM/HITL jika perlu -> validasi ulang -> output terstruktur.]
 
 Tahap pengembangan sistem bertujuan membangun pipeline eksperimen yang sama untuk metode usulan dan baseline. Pipeline dimulai dari preprocessing dokumen, OCR, pembacaan layout, pembentukan field candidate, perhitungan confidence, routing, dan pembuatan output JSON. Penjelasan teknis mengenai field candidate extraction, confidence scoring, dan routing diberikan secara khusus pada Bagian 3.3 agar pembahasan algoritma tidak tercampur dengan tahapan penelitian.
 
@@ -124,7 +120,6 @@ Algoritma yang diusulkan menjelaskan bagaimana sistem mengubah hasil OCR dan lay
 
 ### 3.3.1 Field Candidate Extraction
 
-[ADD IMAGE HERE: Contoh visual field candidate extraction pada satu receipt atau invoice. Tampilkan potongan dokumen dengan bounding box OCR, label seperti Total/PPN/Tanggal, panah dari label ke nilai, dan tabel kecil di samping berisi field, raw value, normalized value, bbox, dan evidence.]
 
 Field candidate extraction bertujuan menghasilkan daftar kemungkinan nilai untuk setiap field target. Tahap ini tidak langsung menentukan hasil akhir, tetapi menyediakan alternatif nilai beserta bukti pendukungnya. Input dari tahap ini adalah hasil OCR, yaitu teks, bounding box, dan confidence OCR. Jika dokumen berupa PDF atau gambar, preprocessing dilakukan terlebih dahulu agar orientasi, ukuran, dan kualitas gambar cukup layak untuk OCR.
 
@@ -140,7 +135,6 @@ Setelah struktur awal terbentuk, sistem mencari field candidate menggunakan bebe
 | Table position | Membaca hubungan baris dan kolom pada area tabel. | Baris detail dibedakan dari baris ringkasan. |
 | Semantic similarity | Membantu menemukan label yang maknanya mirip walaupun tidak sama secara literal. | Variasi label pembayaran dapat diarahkan ke field total. |
 
-[ADD IMAGE HERE: Ilustrasi struktur data field candidate. Gunakan diagram objek JSON yang menampilkan field, raw_value, normalized_value, label_text, value_bbox, OCR confidence, source, dan evidence. Cocok sebagai gambar yang menjelaskan mengapa setiap kandidat bisa diaudit.]
 
 Setiap field candidate disimpan bersama metadata agar dapat diaudit. Metadata tersebut mencakup raw text, normalized value jika tersedia, bounding box, label terdekat, region asal, OCR confidence, serta petunjuk yang mendukung kandidat tersebut. Format konseptual field candidate adalah sebagai berikut.
 
@@ -161,7 +155,6 @@ Jika terdapat lebih dari satu kandidat untuk field yang sama, semua kandidat tet
 
 ### 3.3.2 Confidence Score
 
-[ADD IMAGE HERE: Diagram komponen confidence score berbentuk weighted-sum. Tampilkan enam komponen: OCR quality, label match, spatial confidence, schema validation, context consistency, dan candidate agreement yang masuk ke skor S_i, lalu diberi penalti risiko P_i untuk menghasilkan C_final.]
 
 Confidence score dihitung untuk menilai apakah field candidate cukup aman diterima otomatis. Perhitungan dilakukan pada level field, bukan level dokumen. Misalkan dokumen memiliki daftar field target:
 
@@ -204,7 +197,6 @@ Nilai \(P_i\) merepresentasikan total penalti risiko, sedangkan \(\lambda\) meng
 
 ### 3.3.3 Routing
 
-[ADD IMAGE HERE: Diagram routing field-level berbentuk decision tree. Mulai dari C_final dan validasi kritis, lalu bercabang ke accept, text-LLM untuk ketidakpastian tekstual, VLM crop untuk ketidakpastian visual, dan human review jika confidence tetap rendah atau validasi gagal.]
 
 Routing menentukan jalur pemrosesan untuk setiap field berdasarkan confidence akhir dan jenis ketidakpastian. Sistem membedakan dua jenis ketidakpastian, yaitu ketidakpastian tekstual dan ketidakpastian visual. Ketidakpastian tekstual terjadi ketika OCR cukup terbaca, tetapi pemilihan kandidat, pemahaman label, atau normalisasi masih ambigu. Ketidakpastian visual terjadi ketika hasil OCR mencurigakan karena kualitas gambar, karakter ambigu, atau kemungkinan karakter hilang.
 
@@ -224,11 +216,9 @@ $$
 
 Nilai awal yang digunakan adalah \(\tau_{accept}=0.85\) dan \(\tau_{review}=0.60\), namun nilai akhir ditentukan melalui data validasi. Pada jalur text-LLM, model hanya menerima konteks OCR yang relevan, seperti label terdekat, baris yang sama, beberapa baris sekitar, dan field lain yang sudah diterima. Pada jalur VLM-crop, sistem mengirim expanded crop yang mencakup nilai, label terdekat, dan margin sekitar agar informasi penting tidak terpotong.
 
-[ADD IMAGE HERE: Ilustrasi expanded crop untuk VLM. Tampilkan bounding box nilai yang sempit, lalu area crop yang diperluas mencakup label terdekat, nilai, baris sekitar, dan margin. Bandingkan tight crop vs expanded crop agar jelas mengapa crop tidak boleh terlalu sempit.]
 
 Setelah jalur eskalasi dijalankan, hasilnya divalidasi ulang. Jika hasil LLM atau VLM memenuhi schema dan meningkatkan confidence, field diperbarui dengan route baru. Jika hasil tetap tidak valid, tidak konsisten, atau memiliki risiko tinggi, field diberi status human review. Dalam ruang lingkup penelitian ini, human review dapat berupa flag atau simulasi, sehingga sistem tetap dapat dievaluasi tanpa harus membangun antarmuka koreksi penuh.
 
-[ADD IMAGE HERE: Diagram output JSON dan audit trail. Tampilkan contoh satu field dengan value, normalized_value, route, confidence, validation_status, decision/hasil routing, serta panah yang menunjukkan asal evidence dari OCR/rule/LLM/VLM.]
 
 Output akhir setiap field memuat nilai, nilai ternormalisasi, route yang digunakan, confidence akhir, status validasi, dan hasil routing. Metadata ini penting karena penelitian tidak hanya mengukur apakah nilai benar, tetapi juga mengamati jalur apa yang digunakan untuk menghasilkan nilai tersebut.
 
@@ -249,7 +239,6 @@ Evaluasi dilakukan untuk mengetahui apakah metode confidence-guided field-level 
 
 Rancangan evaluasi disusun agar menjawab pertanyaan penelitian secara langsung. Evaluasi ekstraksi field candidate digunakan untuk menilai apakah sistem mampu menghasilkan field candidate yang benar dari OCR dan layout. Evaluasi confidence dan routing digunakan untuk menilai apakah sistem mampu membedakan field yang cukup diproses oleh jalur ringan dari field yang perlu dieskalasi ke jalur komputasi lebih tinggi. Evaluasi baseline digunakan untuk menilai apakah field-level routing lebih baik dibanding pendekatan OCR-only, OCR+rule, OCR+LLM semua field, direct VLM semua field, dan document-level routing. Evaluasi HITL digunakan sebagai ablation untuk menilai pengaruh review manusia terhadap false accept dan beban kerja.
 
-[ADD IMAGE HERE: Diagram perbandingan baseline. Tampilkan enam jalur sejajar: OCR-only, OCR+rule, OCR+LLM semua field, Direct VLM semua field, Document-level routing, dan Proposed confidence-guided field-level routing. Beri penekanan bahwa proposed melakukan routing per field untuk mengurangi pemakaian model besar.]
 
 Metode usulan dibandingkan dengan beberapa baseline berikut:
 
@@ -264,7 +253,6 @@ Metode usulan dibandingkan dengan beberapa baseline berikut:
 
 Jika model LLM atau VLM tertentu tidak dapat direplikasi persis karena keterbatasan sumber daya, penelitian menggunakan model yang tersedia secara fungsional setara dan mencatat konfigurasi tersebut secara eksplisit. Seluruh baseline dijalankan pada split data yang sama, dengan aturan normalisasi dan ground truth yang sama.
 
-[ADD IMAGE HERE: Diagram ablation study. Tampilkan metode lengkap di tengah, lalu beberapa versi yang menghilangkan komponen: tanpa schema validation, tanpa context consistency, tanpa VLM crop, tanpa field-level routing, dan dengan/tanpa HITL simulation.]
 
 Selain baseline, dilakukan ablation study untuk melihat pengaruh masing-masing komponen:
 
@@ -275,8 +263,6 @@ Selain baseline, dilakukan ablation study untuk melihat pengaruh masing-masing k
 | A3 | Tanpa VLM crop | Menguji apakah text-only LLM cukup untuk kasus visual/OCR. |
 | A4 | Tanpa field-level routing | Mengukur dampak jika routing hanya dilakukan pada level dokumen. |
 | A5 | Dengan/tanpa HITL simulation | Mengukur trade-off antara akurasi akhir dan beban review manusia. |
-
-[ADD IMAGE HERE: Diagram evaluasi metrik berbentuk matriks. Kelompokkan metrik menjadi akurasi ekstraksi, risiko, efisiensi, dan calibration. Contoh: Exact Match/F1/CER-WER/Numeric Error untuk akurasi; False Accept/Human Review untuk risiko; Latency/Cost Proxy/STP untuk efisiensi; Calibration Error untuk reliability.]
 
 Metrik evaluasi yang digunakan adalah sebagai berikut:
 
